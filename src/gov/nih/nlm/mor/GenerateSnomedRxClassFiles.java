@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,6 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.InferenceType;
-import org.semanticweb.owlapi.reasoner.NodeSet;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.search.EntitySearcher;
@@ -52,8 +52,8 @@ public class GenerateSnomedRxClassFiles {
 	HashMap<String, String> roots = new HashMap<String, String>();
 	HashMap<OWLClass, ArrayList<Path>> productPaths = new HashMap<OWLClass, ArrayList<Path>>();
 	HashMap<Product, ArrayList<OWLClass>> classRootMap = new HashMap<Product, ArrayList<OWLClass>>();
-//	HashMap<Long, ArrayList<Path>> classPathMap = new HashMap<Long, ArrayList<Path>>();
-	HashMap<OWLClass, ArrayList<Pair>> pairs = new HashMap<OWLClass, ArrayList<Pair>>();
+	TreeMap<OWLClass, ArrayList<Path>> classPathMap = new TreeMap<OWLClass, ArrayList<Path>>();
+//	HashMap<OWLClass, ArrayList<Pair>> pairs = new HashMap<OWLClass, ArrayList<Pair>>();
 	HashMap<Long, ArrayList<RxNormIngredient>> sct2RxIN = new HashMap<Long, ArrayList<RxNormIngredient>>();
 	ArrayList<ClassRow> classesRows = new ArrayList<ClassRow>();
 	final String namespace = "http://snomed.info/id/";
@@ -202,9 +202,11 @@ public class GenerateSnomedRxClassFiles {
 		
 		generateClassTreeFile();
 		
-		populateIngredientMap();
+		printClassMap();
 		
-		generateDrugMembersFile();
+//		populateIngredientMap();
+		
+//		generateDrugMembersFile();
 		
 	}
 	
@@ -221,64 +223,18 @@ public class GenerateSnomedRxClassFiles {
 //		
 //	}
 	
-	public void addToClassPathMap(ArrayList<OWLClass> classList, OWLClass root) {
-		
-	}
-	
-	public void getAllPaths(OWLClass c, OWLClass rootClass, Set<OWLClass> classesAboveRoot) {
-		Vector<OWLClass> seen = new Vector<OWLClass>();
-		reasoner.subClasses(c, false).forEachOrdered(x -> {
-			if( !x.equals(factory.getOWLNothing()) && !classesAboveRoot.contains(x) && !seen.contains(x)) {
-				seen.add(x);
-				getPairs(x, rootClass, classesAboveRoot);
-			}
-		});
-		reasoner.subClasses(c, true).forEachOrdered(x -> {
-			if( !x.equals(factory.getOWLNothing())) {
-				Pair pair = new Pair(c, x);
-				if( pairs.containsKey(c) ) {
-					ArrayList<Pair> list = pairs.get(c);
-					list.add(pair);
-					pairs.put(c, list);
+	public void printClassMap() {
+		for(OWLClass c : this.classPathMap.keySet()) {
+			for( Path p : this.classPathMap.get(c) ) {
+				for( int i=0; i < p.getPath().size(); i++ ) {
+					this.classTreeFile.print(getRDFSLabel(p.getPath().get(i)) + ".");
 				}
-				else {
-					ArrayList<Pair> list = new ArrayList<Pair>();
-					list.add(pair);
-					pairs.put(c, list);
-				}
-			}
-		});	
-	}
-	
-	public void getPairs(OWLClass c, OWLClass root, Set<OWLClass> classesAboveRoot) {
-		
-		Set<OWLClass> directSuperClasses = reasoner.getSuperClasses(c, true).entities().collect(Collectors.toSet());
-		
-		directSuperClasses.remove(factory.getOWLThing());
-		directSuperClasses.remove(c);
-		directSuperClasses.removeAll(classesAboveRoot);
-
-		if( directSuperClasses.size() > 0 ) {
-			Iterator<OWLClass> itr = directSuperClasses.iterator();
-			while( itr.hasNext() ) {
-				OWLClass d = itr.next();
-				if( this.pairs.get(c) != null) {
-					ArrayList<Pair> list = pairs.get(c);
-					Pair pair = new Pair(d, c);
-					list.add(pair);
-					this.pairs.put(d, list);
-				}
-				else {
-					ArrayList<Pair> list = new ArrayList<Pair>();
-					Pair pair = new Pair(d, c);
-					list.add(pair);
-					this.pairs.put(d, list);
-				}
-				
+				this.classTreeFile.print("\n");
+				this.classTreeFile.flush();
 			}
 		}
 	}
-	
+		
 	
 	public void generateClassTreeFile() {
 		
@@ -300,89 +256,44 @@ public class GenerateSnomedRxClassFiles {
 				10: Count of drug members from FDASPL/FMTSME
 		 */
 
-// This is slippery and probably over engineered.
-// The issue is this works from any class and goes to the root.  There
-// can be MULTIPLE paths to root, and the reasoner merely returns a NodeSet of
-// classes.  This node set has absolutely no bearing on where a path diverges into
-// more than one.  So, now we try it from the top and ignore clinical drugs.
-//		for( String root : roots.keySet() ) {
-//			root = roots.get(root);
-//			String field2 = "";
-//			OWLClass rootClass = factory.getOWLClass(namespace, root);
-//			
-//			Set<OWLClass> classesAboveRoot = reasoner.getSuperClasses(rootClass, false).entities().collect(Collectors.toSet());
-//			getAllPaths(rootClass, rootClass, classesAboveRoot);
-//			
-//			for( Pair p : this.pairs.get(rootClass)) {
-//				printPaths(p);
-//			}
-//			
-//		}
-		
 		for( String root : roots.keySet()  ) {
-			printThePath(factory.getOWLClass(namespace, roots.get(root)));
+			OWLClass rootClass = factory.getOWLClass(namespace, roots.get(root));
+			setPaths(rootClass, new Path(rootClass));
 		}
 	}
 	
-	public void printThePath(OWLClass c) {
-		if( reasoner.subClasses(c, true).filter(x -> classIsFine(c, x) ).count() > 0 ) {
-			reasoner.subClasses(c, true).filter(x -> classIsFine(c, x) ).forEach(y -> {
-				System.out.print(getRDFSLabel(c) + " -> " + getRDFSLabel(y) + " -> " );
-				printThePath(y);
-			});
+	private void setPaths(OWLClass c, Path p) {
+		Set<OWLClass> directs = reasoner.subClasses(c, true).filter(x -> classIsFine(x)).collect(Collectors.toSet());
+		
+		for( OWLClass clz : directs ) {
+			Path x = new Path(p);
+			x.addToPath(clz);
+			addPathToMap(c, x);
+			setPaths(clz, x);
+		}
+		
+	}
+	
+	private void addPathToMap(OWLClass c, Path p) {
+		if( this.classPathMap.containsKey(c) ) {
+			ArrayList<Path> list = this.classPathMap.get(c);
+			list.add(p);
+			this.classPathMap.put(c, list);
 		}
 		else {
-			System.out.print("\n");
+			ArrayList<Path> list = new ArrayList<Path>();
+			list.add(p);
+			this.classPathMap.put(c, list);
 		}
-	}	
-	
-	public boolean classIsFine(OWLClass b, OWLClass c) {
-		if( !c.equals(factory.getOWLNothing()) && getRDFSLabel(c) != null && !c.equals(b) && !getRDFSLabel(c).contains("(clinical drug)") ) {
-			return true;
-		}
-		else return false;
 	}
 	
-//	private void printPaths(Pair p) {
-//		OWLClass child = p.getChild();
-//		System.out.print(getRDFSLabel(child) + " -> ");
-//		
-//		ArrayList<Pair> list = pairs.get(child);
-//		if( list != null ) {
-//			for( Pair r : list ) {
-//				System.out.println(getRDFSLabel(r.getParent()) + " -> ");
-//				printPaths(r);
-//			}
-//		}
-//
-//	}
 
-	
-	
-//	public void setPaths(Path path, OWLClass classForTree, OWLClass root) {
-//		if( classForTree.equals(root) ) {
-//			path.addToPath(root);
-//			if( paths.containsKey(classForTree) ) {
-//				ArrayList<Path> pthz = paths.get(classForTree);
-//				pthz.add(path);
-//				paths.put(classForTree, pthz);
-//			}
-//			else {
-//				ArrayList<Path> pthz = new ArrayList<Path>();
-//				pthz.add(path);
-//				paths.put(classForTree, pthz);
-//			}			
-//			return;
-//		}
-//		reasoner.superClasses(classForTree, true).forEach(x -> {
-//			if( x != null && !x.equals(classForTree) && !x.equals(factory.getOWLNothing()) ) {			
-//				path.addToPath(x);
-//				setPaths(new Path(path), x, root);
-//			}			
-//		});	
-//	}
-	
-	public void generateDrugMembersFile() {
+	public boolean classIsFine(OWLClass c) {
+		if( !c.equals(factory.getOWLNothing()) && getRDFSLabel(c) != null )  {
+			if( getRDFSLabel(c).contains("(product)") || getRDFSLabel(c).contains("(medicinal product)")) return true;
+			else return false;
+		}
+		else return false;
 	}
 	
 	public String getId(OWLClass c) {
@@ -392,27 +303,6 @@ public class GenerateSnomedRxClassFiles {
 		}
 		return id;		
 	}
-	
-//	public void printPaths() {
-//		for( OWLClass key : this.pairs.keySet() ) {
-//			if( pairs.get(key) != null ) {
-//				ArrayList<OWLClass> list = pairs.get(key);
-//				for( int i = list.size() - 1; i > 0; i--) {
-//					printPath(key, list.get(i));					
-//				}
-//			}
-//		}		
-//	}
-//	
-//	public void printPath(OWLClass child, OWLClass parent) {
-//		System.out.print(getRDFSLabel(parent) + " -> " + getRDFSLabel(child) );
-//		if( this.pairs.get(child) != null ) {
-//			for( OWLClass c : this.pairs.get(child) ) {
-//
-//			}
-//		}
-//		System.out.print("\n");
-//	}
 	
 	public String getRDFSLabel(OWLClass cls) {
 		if( cls != null ) {

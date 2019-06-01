@@ -26,8 +26,9 @@ public class Path {
 		
 	}
 	
-	public void addToPath(OWLClass c) {
+	public Path addToPath(OWLClass c) {
 		path.add(c);
+		return this;
 	}
 	
 	public int getPathSize() {
