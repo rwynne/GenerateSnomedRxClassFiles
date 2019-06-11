@@ -348,20 +348,37 @@ public class GenerateSnomedRxClassFiles {
 			for( OWLClass c : drugMemberMap.keySet() ) {
 				for( DrugMember dm : drugMemberMap.get(c) ) {
 					Set<RxNormIngredient> ins = dm.getIngredients();
+					
+					String _3_classId = null;
+					String _4_className = null;
+					String _5_rxCui = null;
+					String _6_rxName = null;
+					String _7_rxTty = null;
+					String _8_sourceId = null;      //MP id
+					String _9_sourceName = null;    //MP name
+					String _10_classRelation = null;
+					String _11_classTreeId = null;  //Path
+					String _12_rxCui = null;        //normalized PIN cui
+					String _13_inName = null;       //normalized PIN name
+					String _14_significant = "Y";  //always Y per Lee
+					String _15_ttyAgain = "IN";		//always IN
+					
+					if( !ins.isEmpty() ) {
+						
 					for(RxNormIngredient in : ins ) {
-						String _3_classId = null;
-						String _4_className = null;
-						String _5_rxCui = null;
-						String _6_rxName = null;
-						String _7_rxTty = null;
-						String _8_sourceId = null;      //MP id
-						String _9_sourceName = null;    //MP name
-						String _10_classRelation = null;
-						String _11_classTreeId = null;  //Path
-						String _12_rxCui = null;        //normalized PIN cui
-						String _13_inName = null;       //normalized PIN name
-						String _14_significant = "Y";  //always Y per Lee
-						String _15_ttyAgain = "IN";		//always IN	
+						_3_classId = null;
+						_4_className = null;
+						_5_rxCui = null;
+						_6_rxName = null;
+						_7_rxTty = null;
+						_8_sourceId = null;      //MP id
+						_9_sourceName = null;    //MP name
+						_10_classRelation = null;
+						_11_classTreeId = null;  //Path
+						_12_rxCui = null;        //normalized PIN cui
+						_13_inName = null;       //normalized PIN name
+						_14_significant = "Y";  //always Y per Lee
+						_15_ttyAgain = "IN";		//always IN	
 						
 						String[] normalizedIn = normalizeIngredient(in.getRxcui());
 						_3_classId = getId(dm.getProduct());
@@ -376,7 +393,40 @@ public class GenerateSnomedRxClassFiles {
 						_12_rxCui = normalizedIn[1];        //normalized PIN cui
 						_13_inName = normalizedIn[0];       //normalized PIN name
 						_14_significant = "Y";  //always Y per Lee
+						_15_ttyAgain = "IN";		//always IN
+					}
+					}
+					else {  //we don't have the asserted official mapping
+						_3_classId = null;
+						_4_className = null;
+						_5_rxCui = null;
+						_6_rxName = null;
+						_7_rxTty = null;
+						_8_sourceId = null;      //MP id
+						_9_sourceName = null;    //MP name
+						_10_classRelation = null;
+						_11_classTreeId = null;  //Path
+						_12_rxCui = null;        //normalized PIN cui
+						_13_inName = null;       //normalized PIN name
+						_14_significant = "Y";  //always Y per Lee
 						_15_ttyAgain = "IN";		//always IN	
+						
+//						String[] normalizedIn = normalizeIngredient(in.getRxcui());
+						_3_classId = getId(dm.getProduct());
+						_4_className = getRDFSLabel(dm.getProduct()).replace(" (product)", "");
+						_5_rxCui = "";
+						_6_rxName = "";
+						_7_rxTty = "";
+						_8_sourceId = String.valueOf(getId(dm.getMP()));      //MP id
+						_9_sourceName = getRDFSLabel(dm.getMP()).replace(" (medicinal product)", "");    //MP name
+						_10_classRelation = "";
+						_11_classTreeId = getClassTreeId(dm.getPath());  //Path
+						_12_rxCui = "";        //normalized PIN cui
+						_13_inName = "";       //normalized PIN name
+						_14_significant = "";  //always Y per Lee
+						_15_ttyAgain = "";		//always IN						
+						
+					}
 						
 						this.drugMembersFile.println(_1_source + "|" +
 						_2_relationship + "|" +
@@ -399,7 +449,7 @@ public class GenerateSnomedRxClassFiles {
 										
 				}
 			}
-		}
+		
 	
 	private void setDrugMemberMap(OWLClass c, OWLClass snctClassOfMp, Set<RxNormIngredient> newIns, Path p) {
 		DrugMember dm = new DrugMember(c, snctClassOfMp, newIns, p);
