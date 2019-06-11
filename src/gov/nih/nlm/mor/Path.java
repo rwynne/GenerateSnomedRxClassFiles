@@ -31,6 +31,11 @@ public class Path {
 		return this;
 	}
 	
+	public Path removeHead() {
+		path.remove(0);
+		return this;
+	}
+	
 	public int getPathSize() {
 		if( path != null ) {
 			return path.size();
