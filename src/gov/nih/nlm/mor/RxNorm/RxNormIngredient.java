@@ -24,11 +24,14 @@ public class RxNormIngredient implements java.io.Serializable {
 	private boolean isPIN = false;
 	private boolean isMIN = false;
 	private boolean isAllergenic = false;
+	private boolean isSignificant = false;
+	private boolean direct = false;
 	private Vector<Long> snomedCodes = new Vector<Long>();
 	
 	public RxNormIngredient(Integer rxcui, String name, String type) {
 		this.rxcui = rxcui;
 		this.name = name;
+		this.tty = type;		
 		switch(type) {
 			case "IN":
 				break;
@@ -51,38 +54,11 @@ public class RxNormIngredient implements java.io.Serializable {
 		this.language = b.get("language").toString();
 		this.suppress = b.get("suppress").toString();
 		this.umlscui = b.get("umlscui").toString();
-//		JSONObject allRelated = null;
-//		JSONObject allProperties = null;
-//		JSONObject rxHistory = null;		
-//				
-//		try {
-//			
-//			//TODO: Make these configurable
-////			allRelated = getresult("https://rxnavdev.nlm.nih.gov/REST/rxcui/" + rxcui + "/allrelated.json");
-//			allProperties = getresult("https://rxnavdev.nlm.nih.gov/REST/rxcui/" + rxcui + "/allProperties.json?prop=all");
-////			rxHistory = getresult("https://rxnavdev.nlm.nih.gov/REST/rxcuihistory/concept.json?rxcui=" + rxcui );
-//		} catch (IOException e) {
-//			System.out.println("Unable to finish building SCD for rxcui " + rxcui);
-//			e.printStackTrace();
-//		}
-//		
-//		if( allProperties != null ) {
-//			if(allProperties.get("propConceptGroup") != null ) {
-//				JSONObject propConceptGroup = (JSONObject) allProperties.get("propConceptGroup");
-//				JSONArray conceptGroup = (JSONArray) propConceptGroup.get("propConcept");
-//				for( int i=0; i < conceptGroup.length(); i++ ) {
-//					JSONObject element = (JSONObject) conceptGroup.get(i);
-//					if( element.getString("propCategory").equals("CODES") ) {
-//						String propName = element.getString("propName");
-//						if( propName.equals("SNOMEDCT") ) {
-//							String propValue = element.getString("propValue");
-//							snomedCodes.add(new Integer(propValue));
-//						}
-//					}
-//				}
-//			}
-//		}
 	}
+	
+	public RxNormIngredient() {
+		
+	}	
 	
 	public static JSONObject getresult(String URLtoRead) throws IOException {
 		URL url;
@@ -105,10 +81,6 @@ public class RxNormIngredient implements java.io.Serializable {
 		return json;
 	}	
 	
-	public RxNormIngredient() {
-		
-	}
-	
 	public void setSnomedCodes(Integer code) {
 		JSONObject allSnomedCodes = null;
 		String cuiString = code.toString();
@@ -126,7 +98,7 @@ public class RxNormIngredient implements java.io.Serializable {
 			for( int i=0; i < propConceptArr.length(); i++ ) {
 				JSONObject conceptValue = (JSONObject) propConceptArr.get(i);
 				Long codeToAdd = new Long(conceptValue.get("propValue").toString());
-				this.snomedCodes.add(codeToAdd);
+				if( !snomedCodes.contains(codeToAdd) )	this.snomedCodes.add(codeToAdd);
 			}
 		}
 	}
@@ -141,6 +113,30 @@ public class RxNormIngredient implements java.io.Serializable {
 		for( Long sc : this.snomedCodes ) {
 			System.out.println("\t\tSnomed Code => " + sc.toString() );
 		}
+	}
+	
+	public void setDirect(boolean b) {
+		this.direct = b;
+	}
+	
+	public boolean getDirect() {
+		return this.direct;
+	}
+	
+	public void setIsSignificant(boolean b) {
+		this.isSignificant = b;
+	}
+	
+	public boolean getIsSignificant() {
+		return this.isSignificant;
+	}
+	
+	public void setIsMIN(boolean b) {
+		this.isMIN = b;
+	}
+	
+	public boolean getIsMIN() {
+		return this.isMIN;
 	}
 	
 	public void setAllergenic(boolean b) {
@@ -186,5 +182,60 @@ public class RxNormIngredient implements java.io.Serializable {
 	public String getUmlscui() {
 		return this.umlscui;
 	}
+	
+	public boolean isEquivalent(RxNormIngredient r) {
+		boolean eq = true;
+		if( !this.rxcui.equals(r.getRxcui()) || !this.name.equals(r.getName()) || 
+			this.direct != r.getDirect() ||	!this.isPIN == r.getPIN() )
+			eq = false;
+		return eq;
+	}
+	
+    public synchronized int hashCode() {
+        int _hashCode = 1;
+        if (this.rxcui != null) {
+            _hashCode += this.rxcui.hashCode();
+        }
+        if (this.name != null) {
+            _hashCode += this.name.hashCode();
+        }
+        if (this.tty != null) {
+            _hashCode += this.tty.hashCode();
+        }
+        if (String.valueOf(this.direct) != null ) {
+        	_hashCode += String.valueOf(this.direct).hashCode();
+        }
+        return _hashCode;
+    }
+		  
+	public boolean equals(Object o) {
+		boolean equal = true;
+		if (o instanceof RxNormIngredient) {
+			Integer a = this.rxcui;
+			Integer b = ((RxNormIngredient) o).getRxcui();
+			if( !a.equals(b) ) {
+				equal = false;
+			}
+			String r = this.name;
+			String s = ((RxNormIngredient) o).getName();
+			if( !r.equals(s)) {
+				equal = false;
+			}
+			String c = this.tty;
+			String d = ((RxNormIngredient) o).getTty();
+			if( !c.equals(d) ) {
+				equal = false;
+			}
+			boolean e = this.direct;
+			boolean f = ((RxNormIngredient) o).getDirect();
+			if( (e == false && f == true) ) {
+				equal = false;
+			}
+		}
+		else {
+			equal = false;
+		}		
+		return equal;
+	}		
 
 }

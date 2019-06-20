@@ -31,6 +31,11 @@ public class Path {
 		return this;
 	}
 	
+	public Path removeHead() {
+		path.remove(0);
+		return this;
+	}
+	
 	public int getPathSize() {
 		if( path != null ) {
 			return path.size();
@@ -65,6 +70,27 @@ public class Path {
 		return id;		
 	}
 	
-	
+    public synchronized int hashCode() {
+        int _hashCode = 1;
+        if (this.path != null) {
+            _hashCode += this.path.hashCode();
+        }
+        return _hashCode;
+    }
+		  
+	public boolean equals(Object o) {
+		boolean equal = true;
+		if (o instanceof Path) {
+			ArrayList<OWLClass> a = this.path;
+			ArrayList<OWLClass> b = ((Path) o).getPath();
+			if( !a.equals(b) ) {
+				equal = false;
+			}
+		}
+		else {
+			equal = false;
+		}		
+		return equal;
+	}		
 
 }
