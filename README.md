@@ -1,5 +1,5 @@
 "# GenerateSnomedRxClassFiles" 
-Program to produce the files necessary for SNOMED CT classes.
+Program to produce the files necessary for SNOMED CT classes utilized by RxClass.
 
 Prerequisite: 
 The SNOMED CT OWL file produced by the <a href="https://github.com/IHTSDO/snomed-owl-toolkit" target="_new">snomed-owl-toolkit</a>.
