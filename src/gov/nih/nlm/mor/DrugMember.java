@@ -1,6 +1,5 @@
 package gov.nih.nlm.mor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 

@@ -17,6 +17,9 @@ import org.json.JSONObject;
 // https://rxnavstage.nlm.nih.gov/REST/rxcui/{rxcui}/allrelated.json
 // https://rxnavstage.nlm.nih.gov/REST/rxcui/403966/allProperties.json?prop=all
 // https://rxnavstage.nlm.nih.gov/REST/rxcuihistory/concept.json?rxcui={rxcui} <--  for Active concepts, get the BoSS(s)
+
+//This class is currently unused. Pertains to SCDs not in scope.
+
 public class RxNormSCD implements java.io.Serializable {
 
 	private static final long serialVersionUID = 2261607265667390359L;
@@ -37,7 +40,7 @@ public class RxNormSCD implements java.io.Serializable {
 	private boolean isVetOnly = false;
 	private boolean isPrescribable = false;
 	private boolean isVaccine = false;
-	private boolean isActive = false;
+	//private boolean isActive = false;
 	private String bossIssue = "";
 	private String activeIngIssue = "";
 	
@@ -184,7 +187,7 @@ public class RxNormSCD implements java.io.Serializable {
 		System.out.println(cui);
 		JSONObject allRelated = null;
 //		JSONObject allProperties = null;
-		JSONObject rxHistory = null;
+//		JSONObject rxHistory = null;
 		JSONObject ndc = null;
 		JSONObject humanProperty = null;
 //		long start = System.currentTimeMillis();

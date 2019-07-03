@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -103,12 +102,7 @@ public class GenerateSnomedRxClassFiles {
 		reasoner = reasonerFactory.createReasoner(ontology);		
 		factory = man.getOWLDataFactory();		
 
-		//famous last words for a moving target:
-		//make this configurable.  Add a properties file describing every
-		//root node needed for these files.  At the moment this is just
-		//MOA and CHEM (SC)... TC is not in scope right now.
-		//Please make this configurable when there is time.
-		
+		//TODO: Make configurable
 		//RootClass(OWLClass c, String n, Long code, String rel, String source)
 		
 		//This contructor will take a substring of 6 characters for the SRC column as it is char(8) - to which we could alter/expand the column that could potentially add unnecessary
@@ -258,7 +252,7 @@ public class GenerateSnomedRxClassFiles {
 
 		for(RootClass root : this.allRootClassPaths.keySet()) {
 			
-			OWLClass rootClass = root.getRootClass();
+			// OWLClass rootClass = root.getRootClass();
 			String _1_source = root.getSource();
 			String _2_relationship = root.getRela();				
 
@@ -304,11 +298,11 @@ public class GenerateSnomedRxClassFiles {
 						}						
 					}
 					
-					//We ignore the root, implied indirects? Check with OB
+					//Include the root for explicit indirects
 					while(order.size() > 0) {
 						RxNormIngredient in = null;
 						OWLClass productForIndirect = order.remove(0);
-						if( !productForIndirect.equals(rootClass) ) {
+//						if( !productForIndirect.equals(rootClass) ) {
 							for( OWLClass mp : mps ) {
 								if( this.sct2RxIN.containsKey(Long.valueOf(getId(mp))) ) {
 									in = sct2RxIN.get(Long.valueOf(getId(mp))).get(0);
@@ -317,7 +311,7 @@ public class GenerateSnomedRxClassFiles {
 									}
 								}																				
 							}
-						}
+//						}
 					}
 					
 					
@@ -381,350 +375,96 @@ public class GenerateSnomedRxClassFiles {
 		_14_significant + "|" +
 		_15_ttyAgain
 		);
-		this.drugMembersFile.flush();
-		
-		
-				
+		this.drugMembersFile.flush();				
 	}
-					
-//					ArrayList<OWLClass> path = p.getPath(); 
-//					HashMap<Long, Set<RxNormIngredient>> mp2RxInMap = getClassTypesAndIns(c);
-//					
-//					for( Long snctCode : mp2RxInMap.keySet()) {
-//						OWLClass mpClassForAll = factory.getOWLClass(namespace, String.valueOf(snctCode));
-//						if( !allMps.containsKey(c) ) {
-//							ArrayList<OWLClass> list = new ArrayList<OWLClass>();
-//							allMps.put(c, list);							
-//						}
-//						else {
-//							ArrayList<OWLClass> list = allMps.get(c);
-//							if( !list.contains(mpClassForAll) ) list.add(mpClassForAll);
-//							allMps.put(c,  list);
-//						}
-//						this.mp2Count.put(factory.getOWLClass(namespace, String.valueOf(snctCode)), Integer.valueOf(mp2RxInMap.get(snctCode).size()));						
-////						else {
-////							ArrayList<OWLClass> list = allMps.get(c);
-////									
-////						}
-//					}
-//					
-//					for( Long snctCodeOfMp : mp2RxInMap.keySet() ) {
-//
-//						Set<RxNormIngredient> ins = mp2RxInMap.get(snctCodeOfMp);
-//						Set<RxNormIngredient> newIns = new HashSet<>();
-//						OWLClass snctClassOfMp = factory.getOWLClass(namespace, String.valueOf(snctCodeOfMp));
-//						if( getId(snctClassOfMp).equals("429507005") ) {
-//							System.out.println("break");
-//						}
-////						setDrugMemberMap(c, snctClassOfMp, newIns, p);
-//						
-//						for( RxNormIngredient in : ins ) {					
-//							RxNormIngredient modIn = in;
-//							boolean directSet = false;
-//							boolean firstProductFound = false;
-//							for( int j=path.size()-1; j != 0; j--) {
-//								//this should be the direct in
-//								OWLClass product = path.get(j);
-//								if( getRDFSLabel(product).contains(" (product)" ) ) {
-//									if( !firstProductFound ) {
-//										firstProductFound = true;
-//										modIn.setDirect(true);
-//										setDirectInToProduct(product, modIn);
-//										newIns.add(modIn);
-//										//									if( classToIngredients.containsKey(direct)) {
-//										//										ArrayList<RxNormIngredient> list = classToIngredients.get(direct);
-//										//										list.add(modIn);
-//										//										this.classToIngredients.put(direct, list);
-//										//									}
-//										//									else {
-//										//										ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-//										//										list.add(modIn);
-//										//										this.classToIngredients.put(direct, list);
-//										//									}
-//									}
-//									else {
-//										modIn.setDirect(false);
-//										setIndirectInToProduct(product, modIn);
-//										newIns.add(modIn);
-//										//									if( classToIngredients.containsKey(inDirect) ) {
-//										//										ArrayList<RxNormIngredient> list = classToIngredients.get(inDirect);
-//										//										if( !in.getDirect() ) {
-//										//											list.add(modIn);											
-//										//										}
-//										//										else {
-//										//											//do nothing, a direct IN trumps an indirect IN
-//										//										}
-//										//
-//										//									}
-//										//									else {
-//										//										ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-//										//										list.add(modIn);
-//										//										this.classToIngredients.put(inDirect, list);
-//										//									}
-//									}
-//								}
-//							}
-//							setDrugMemberMap(c, snctClassOfMp, newIns, p);
-//
-//						}
-////						for( Long a : mp2RxInMap.keySet() ) {
-////							Set<RxNormIngredient> copySet = mp2RxInMap.get(a);
-////							Set<RxNormIngredient> newSet = new HashSet<>();
-////							HashMap<Long, Set<RxNormIngredient>> map = new HashMap<Long, Set<RxNormIngredient>>();
-////							for(RxNormIngredient r : copySet ) {
-////								newSet.add(r);
-////							}
-////							map.put(a, newSet);
-////							this.root2mp2RxInMap.put(c, map);
-////						}						
-//					}
-//				}
+	
+//	private void setDirectInToProduct(OWLClass product, RxNormIngredient directIn) {
+//		if( this.product2In.containsKey(product) ) {
+//			ArrayList<RxNormIngredient> list = product2In.get(product);
+//			if( !list.contains(directIn) ) {
+//				list.add(directIn);
+//				product2In.put(product, list);
+//			}
+//			else {
+//				list = new ArrayList<RxNormIngredient>();
+//				list.add(directIn);
+//				product2In.put(product, list);
 //			}
 //		}
-//		
-//	
-//		for( OWLClass root : roots.keySet()) {
-//			String _1_source = null;
-//			String _2_relationship = null;
-//			RootClass rootClass = roots.get(root);
-//			_1_source = rootClass.getSource();
-//			_2_relationship = rootClass.getRela();
-//			for( OWLClass c : drugMemberMap.keySet() ) {
-//				for( DrugMember dm : drugMemberMap.get(c) ) {
-//					Set<RxNormIngredient> ins = dm.getIngredients();
-//					
-//					String _3_classId = null;
-//					String _4_className = null;
-//					String _5_rxCui = null;
-//					String _6_rxName = null;
-//					String _7_rxTty = null;
-//					String _8_sourceId = null;      //MP id
-//					String _9_sourceName = null;    //MP name
-//					String _10_classRelation = null;
-//					String _11_classTreeId = null;  //Path
-//					String _12_rxCui = null;        //normalized PIN cui
-//					String _13_inName = null;       //normalized PIN name
-//					String _14_significant = "Y";  //always Y per Lee
-//					String _15_ttyAgain = "IN";		//always IN
-//					
-//					if( !ins.isEmpty() ) {
-//
-//						for(RxNormIngredient in : ins ) {
-//							_3_classId = null;
-//							_4_className = null;
-//							_5_rxCui = null;
-//							_6_rxName = null;
-//							_7_rxTty = null;
-//							_8_sourceId = null;      //MP id
-//							_9_sourceName = null;    //MP name
-//							_10_classRelation = null;
-//							_11_classTreeId = null;  //Path
-//							_12_rxCui = null;        //normalized PIN cui
-//							_13_inName = null;       //normalized PIN name
-//							_14_significant = "Y";  //always Y per Lee
-//							_15_ttyAgain = "IN";		//always IN	
-//							
-//							if( getId(dm.getProduct()).equals("764881006") ) {
-//								System.out.println("break");
-//							}
-//							
-//							String[] normalizedIn = normalizeIngredient(in.getRxcui());
-//							_3_classId = getId(dm.getProduct());
-//							_4_className = getRDFSLabel(dm.getProduct()).replace(" (product)", "");
-//							_5_rxCui = String.valueOf(in.getRxcui());
-//							_6_rxName = in.getName();
-//							_7_rxTty = in.getTty();
-//							_8_sourceId = String.valueOf(getId(dm.getMP()));      //MP id
-//							_9_sourceName = getRDFSLabel(dm.getMP()).replace(" (medicinal product)", "");    //MP name
-//							_10_classRelation = getDirectness(dm.getProduct(), in);
-////							_10_classRelation = in.getDirect() ? "DIRECT" : "INDIRECT";
-//							_11_classTreeId = getClassTreeId(dm.getPath());  //Path
-//							_12_rxCui = normalizedIn[1];        //normalized PIN cui
-//							_13_inName = normalizedIn[0];       //normalized PIN name
-//							_14_significant = "Y";  //always Y per Lee
-//							_15_ttyAgain = "IN";		//always IN
-//							
-//							//OB: filter the rows without asserted
-//							//rx INs for now
-//							if( _5_rxCui != null ) {
-//								this.drugMembersFile.println(_1_source + "|" +
-//										_2_relationship + "|" +
-//										_3_classId + "|" +
-//										_4_className + "|" +
-//										_5_rxCui + "|" +
-//										_6_rxName + "|" +
-//										_7_rxTty + "|" +
-//										_8_sourceId + "|" +
-//										_9_sourceName + "|" +
-//										_10_classRelation + "|" +
-//										_11_classTreeId + "|" +
-//										_12_rxCui + "|" +
-//										_13_inName + "|" +
-//										_14_significant + "|" +
-//										_15_ttyAgain
-//										);									
-//							}
-//						}
-//					}
-//					else {  //we don't have the asserted official mapping
-//						
-//						//OB: Grep out blanks where there is no rxnorm name (in)
-//						
-//						_3_classId = null;
-//						_4_className = null;
-//						_5_rxCui = null;
-//						_6_rxName = null;
-//						_7_rxTty = null;
-//						_8_sourceId = null;      //MP id
-//						_9_sourceName = null;    //MP name
-//						_10_classRelation = null;
-//						_11_classTreeId = null;  //Path
-//						_12_rxCui = null;        //normalized PIN cui
-//						_13_inName = null;       //normalized PIN name
-//						_14_significant = "Y";  //always Y per Lee
-//						_15_ttyAgain = "IN";		//always IN	
-//
-//						//						String[] normalizedIn = normalizeIngredient(in.getRxcui());
-//						_3_classId = getId(dm.getProduct());
-//						_4_className = getRDFSLabel(dm.getProduct()).replace(" (product)", "").replace(" (medicinal product)", "");
-//						_5_rxCui = "";
-//						_6_rxName = "";
-//						_7_rxTty = "";
-//						_8_sourceId = String.valueOf(getId(dm.getMP()));      //MP id
-//						_9_sourceName = getRDFSLabel(dm.getMP()).replace(" (medicinal product)", "");    //MP name
-//						_10_classRelation = "";
-//						_11_classTreeId = getClassTreeId(dm.getPath());  //Path
-//						_12_rxCui = "";        //normalized PIN cui
-//						_13_inName = "";       //normalized PIN name
-//						_14_significant = "";  //always Y per Lee
-//						_15_ttyAgain = "";		//always IN						
-
-//					}
-
-//					this.drugMembersFile.println(_1_source + "|" +
-//							_2_relationship + "|" +
-//							_3_classId + "|" +
-//							_4_className + "|" +
-//							_5_rxCui + "|" +
-//							_6_rxName + "|" +
-//							_7_rxTty + "|" +
-//							_8_sourceId + "|" +
-//							_9_sourceName + "|" +
-//							_10_classRelation + "|" +
-//							_11_classTreeId + "|" +
-//							_12_rxCui + "|" +
-//							_13_inName + "|" +
-//							_14_significant + "|" +
-//							_15_ttyAgain
-//							);							
-//
-//				}
-//
-//			}
+//		else {
+//			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
+//			list.add(directIn);
+//			product2In.put(product, list);
 //		}
 //	}
 	
-	private void setDirectInToProduct(OWLClass product, RxNormIngredient directIn) {
-		if( this.product2In.containsKey(product) ) {
-			ArrayList<RxNormIngredient> list = product2In.get(product);
-			if( !list.contains(directIn) ) {
-				list.add(directIn);
-				product2In.put(product, list);
-			}
-			else {
-				list = new ArrayList<RxNormIngredient>();
-				list.add(directIn);
-				product2In.put(product, list);
-			}
-		}
-		else {
-			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-			list.add(directIn);
-			product2In.put(product, list);
-		}
-	}
+//	private void setIndirectInToProduct(OWLClass product, RxNormIngredient indirectIn) {
+//		if( this.product2In.containsKey(product) ) {
+//			ArrayList<RxNormIngredient> list = product2In.get(product);
+//			if( !list.contains(indirectIn) ) {
+//				list.add(indirectIn);
+//				product2In.put(product, list);
+//			}
+//			else {
+//				list = new ArrayList<RxNormIngredient>();
+//				list.add(indirectIn);
+//				product2In.put(product, list);
+//			}
+//		}
+//		else {
+//			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
+//			list.add(indirectIn);
+//			product2In.put(product, list);
+//		}		
+//	}
 	
-	private void setIndirectInToProduct(OWLClass product, RxNormIngredient indirectIn) {
-		if( this.product2In.containsKey(product) ) {
-			ArrayList<RxNormIngredient> list = product2In.get(product);
-			if( !list.contains(indirectIn) ) {
-				list.add(indirectIn);
-				product2In.put(product, list);
-			}
-			else {
-				list = new ArrayList<RxNormIngredient>();
-				list.add(indirectIn);
-				product2In.put(product, list);
-			}
-		}
-		else {
-			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-			list.add(indirectIn);
-			product2In.put(product, list);
-		}		
-	}
-	
-	private String getDirectness(OWLClass product, RxNormIngredient in) {
-		String directness = "INDIRECT";
-		if( this.product2In.containsKey(product) ) {
-			ArrayList<RxNormIngredient> list = product2In.get(product);
-			for( RxNormIngredient i : list.stream().filter(x -> x.getRxcui().equals(in.getRxcui())).collect(Collectors.toSet()) ) {
-				if( i.getDirect() ) {
-					directness = "DIRECT";
-				}
-			}
-		}
-		return directness;
-	}
-		
-	
-	private void setDrugMemberMap(OWLClass c, OWLClass snctClassOfMp, Set<RxNormIngredient> newIns, Path p) {
-		DrugMember dm = new DrugMember(c, snctClassOfMp, newIns, p);
-		if( drugMemberMap.containsKey(c) ) {
-			ArrayList<DrugMember> dms = drugMemberMap.get(c);
-			if( !dms.contains(dm) ) {
-			dms.add(dm);
-			}
-			drugMemberMap.put(c, dms);
-		}
-		else {
-			ArrayList<DrugMember> dms = new ArrayList<DrugMember>();
-			dms.add(dm);
-			drugMemberMap.put(c, dms);
-		}		
-	}
+//	private void setDrugMemberMap(OWLClass c, OWLClass snctClassOfMp, Set<RxNormIngredient> newIns, Path p) {
+//		DrugMember dm = new DrugMember(c, snctClassOfMp, newIns, p);
+//		if( drugMemberMap.containsKey(c) ) {
+//			ArrayList<DrugMember> dms = drugMemberMap.get(c);
+//			if( !dms.contains(dm) ) {
+//			dms.add(dm);
+//			}
+//			drugMemberMap.put(c, dms);
+//		}
+//		else {
+//			ArrayList<DrugMember> dms = new ArrayList<DrugMember>();
+//			dms.add(dm);
+//			drugMemberMap.put(c, dms);
+//		}		
+//	}
 	
 
-	private void setProduct2MpMap(OWLClass product, OWLClass mp) {
-		
-		//we need to add the product as a key if it doesn't exist
-		if( !product2Mp.containsKey(product) ) {
-			ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
-			mpList.add(mp);
-			product2Mp.put(product, mpList);
-		}
-		
-		//then we need to loop through the mps found within the product
-		//if the above case occurs this portion is skipped
-		for( OWLClass p : product2Mp.keySet() ) {
-			if( product2Mp.containsKey(p) ) {
-				if( product2Mp.containsKey(p) ) {
-					ArrayList<OWLClass> mpList = product2Mp.get(p);
-					if( !mpList.contains(mp) ) {
-						mpList.add(mp);
-					}
-					product2Mp.put(p, mpList);
-				}
-				else {
-					ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
-					mpList.add(mp);
-					product2Mp.put(p, mpList);
-					
-				}			
-			}
-		}
-		
-	}
+//	private void setProduct2MpMap(OWLClass product, OWLClass mp) {
+//		
+//		//we need to add the product as a key if it doesn't exist
+//		if( !product2Mp.containsKey(product) ) {
+//			ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
+//			mpList.add(mp);
+//			product2Mp.put(product, mpList);
+//		}
+//		
+//		//then we need to loop through the mps found within the product
+//		//if the above case occurs this portion is skipped
+//		for( OWLClass p : product2Mp.keySet() ) {
+//			if( product2Mp.containsKey(p) ) {
+//				if( product2Mp.containsKey(p) ) {
+//					ArrayList<OWLClass> mpList = product2Mp.get(p);
+//					if( !mpList.contains(mp) ) {
+//						mpList.add(mp);
+//					}
+//					product2Mp.put(p, mpList);
+//				}
+//				else {
+//					ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
+//					mpList.add(mp);
+//					product2Mp.put(p, mpList);
+//					
+//				}			
+//			}
+//		}
+//		
+//	}
 	
 	private Set<OWLClass> getMpsForLastProduct(OWLClass c) {
 		return reasoner.subClasses(c, true).filter(x -> classIsMp(x)).collect(Collectors.toSet());
@@ -745,7 +485,6 @@ public class GenerateSnomedRxClassFiles {
 		
 		for( OWLClass directMpClass : productDirectSubClasses ) {
 			Set<RxNormIngredient> inSet = new HashSet<>();
-			String directMpClassName = getRDFSLabel(directMpClass);
 			Long directMpClassCode = Long.valueOf(getId(directMpClass));
 			ArrayList<RxNormIngredient> list = this.sct2RxIN.get(Long.valueOf(getId(directMpClass)));
 			
@@ -754,9 +493,12 @@ public class GenerateSnomedRxClassFiles {
 					for( Long code : in.getSnomedCodes() ) {
 						if( directMpClassCode.equals(Long.valueOf(code)) ) {
 							
-							String mpCodeString = String.valueOf(getId(directMpClass));
-							OWLClass mpClass = factory.getOWLClass(namespace, mpCodeString);
-							String mpName = getRDFSLabel(mpClass);  //unused, for debugging
+						
+							//for debugging
+							// String mpCodeString = String.valueOf(getId(directMpClass));							
+							//OWLClass mpClass = factory.getOWLClass(namespace, mpCodeString);
+							//String mpName = getRDFSLabel(mpClass);
+							
 							in.setDirect(true);
 							
 							if( ingredients.containsKey(directMpClassCode) ) {
@@ -777,11 +519,6 @@ public class GenerateSnomedRxClassFiles {
 				//we have no corresponding IN to the snomed code
 			}
 		
-//			List<RxNormIngredient> mainList = new ArrayList<RxNormIngredient>();
-//			mainList.addAll(inSet);
-//			
-//			inSet = mainList.stream().distinct().collect(Collectors.toSet());
-			
 			ingredients.put(directMpClassCode, inSet);
 
 		}
@@ -789,68 +526,13 @@ public class GenerateSnomedRxClassFiles {
 		
 		return ingredients;
 		
-	}
-	
-//	public HashMap<Long, Set<RxNormIngredient>> getMpsAndIns(OWLClass c) {
-//		// Get the direct MPs, and nothing else
-//		
-//		
-//		HashMap<Long, Set<RxNormIngredient>> ingredients = new HashMap<Long, Set<RxNormIngredient>>();
-//		
-//		Set<OWLClass> productDirectSubClasses = reasoner.subClasses(c, true).filter(x -> classIsMp(x)).collect(Collectors.toSet());
-////		productDirectSubClasses.remove(c);
-//		productDirectSubClasses.remove(factory.getOWLNothing());
-//		productDirectSubClasses.remove(factory.getOWLThing()); //pointless, trying to avoid NPE 
-//
-//		
-//		for( OWLClass directMpClass : productDirectSubClasses ) {
-//			Set<RxNormIngredient> inSet = new HashSet<>();
-//			String directMpClassName = getRDFSLabel(directMpClass);
-//			Long directMpClassCode = Long.valueOf(getId(directMpClass));
-//			ArrayList<RxNormIngredient> list = this.sct2RxIN.get(Long.valueOf(getId(directMpClass)));
-//			
-//			if( list != null ) {
-//				for( RxNormIngredient in : list ) {
-//					for( Long code : in.getSnomedCodes() ) {
-//						if( directMpClassCode.equals(Long.valueOf(code)) ) {
-//							
-//							String mpCodeString = String.valueOf(getId(directMpClass));
-//							OWLClass mpClass = factory.getOWLClass(namespace, mpCodeString);
-//							String mpName = getRDFSLabel(mpClass);  //unused, for debugging
-//							in.setDirect(true);
-//							
-//							if( ingredients.containsKey(directMpClassCode) ) {
-//								inSet = ingredients.get(directMpClassCode);
-//								if( !inSet.contains(in) ) {
-//									inSet.add(in);
-//								}
-//							}
-//							else {
-//								inSet.add(in);
-//							}
-//						}
-//					}
-//				}				
-//				
-//			}
-//			else {
-//				//we have no corresponding IN to the snomed code
-//			}
-//			
-//			ingredients.put(directMpClassCode, inSet);
-//
-//		}
-//		
-//		return ingredients;
-//		
-//	}	
+	}	
 	
 	public Set<RxNormIngredient> getIndirects(OWLClass root, Set<OWLClass> productIndirectMps, Set<RxNormIngredient> indirectIngredients) {
 		//this is tough.  Instead of going down the tree, OB suggests going up.  So, in addition to
 		//the set of all indirect MPs, we also need to provide some sort of stopping point as to not
 		//slurp in additional indirects above the Product.  This is also to prevent us from gathering
 		//owl:Thing.
-		
 		
 		//we need these indirect sorted, as the reasoner does not take care of this for us.
 		//what this means is we need to form a path upwards, instead of down, so we can gradually
@@ -929,7 +611,7 @@ public class GenerateSnomedRxClassFiles {
 	
 	public void printClassMap(RootClass root) {
 		//print root
-		// MOA||000223|Mechanism of Action (MoA)|N0000000223|821|4309|8||836		
+		// MOA||000223|Mechanism of Action (MoA)|N0000000223|821|4309|8||836	
 		this.classTreeFile.println(root.getClassType() + "|" + "|" + root.getRootCode() + "|" + root.getRootName() + "|" +  root.getRootCode() + "||0||" + "|0"); //post-processing, populate 6 with the number of unique mps
 		for(OWLClass c : this.classPathMap.keySet()) {
 			for( Path p : this.classPathMap.get(c) ) {
@@ -959,18 +641,9 @@ public class GenerateSnomedRxClassFiles {
 		}
 	}
 	
-	private Long getDirectChildrenCount(RootClass root) {
-		//only Products and MPs that are children (direct) of the rool
-		Long i = Long.valueOf("0");
-		i = reasoner.subClasses(root.getRootClass(), true).count();
-		return i;
-	}
-	
 	private String[] normalizeIngredient(Integer cuiFromPIN) {
 		String[] returnArr = new String[2];
-		//Am I really doing this again?  For a possible IN?  get clarification for performance
-		String inString = "";
-		Integer inCode = null;
+
 		String allRelated = "https://rxnavstage.nlm.nih.gov/REST/rxcui/" + cuiFromPIN + "/related.json?tty=IN";
 		JSONObject result = null;
 		try {
@@ -996,8 +669,6 @@ public class GenerateSnomedRxClassFiles {
 								conceptProperties = (JSONArray) conceptGroupVal.get("conceptProperties");
 								for(int j=0; j < conceptProperties.length(); j++) {
 									JSONObject conceptPropertiesVal = (JSONObject) conceptProperties.get(j);
-//									String ingCui = null;
-									String ingName = null;
 //									RxNormIngredient ingToAdd = null;
 //									if( !conceptPropertiesVal.isNull("rxcui") ) {
 //										ingCui = conceptPropertiesVal.getString("rxcui");
@@ -1098,6 +769,7 @@ public class GenerateSnomedRxClassFiles {
 		this.allRootClassPaths.put(rootClass, tmpMap);	
 	}
 	
+	//recursive method to set all possible paths
 	private void setPaths(OWLClass c, Path p) {
 		Set<OWLClass> directs = reasoner.subClasses(c, true).filter(x -> classIsProduct(x)).collect(Collectors.toSet());
 		
@@ -1106,7 +778,6 @@ public class GenerateSnomedRxClassFiles {
 			x.addToPath(clz);
 			addPathToMap(clz, x);
 			setPaths(clz, x);
-//			addPathToMap(c, x);			
 		}
 		
 	}
@@ -1204,15 +875,16 @@ public class GenerateSnomedRxClassFiles {
 	public void cleanup(String classFile) throws IOException {
 		this.classTreeFile.close();
 		this.drugMembersFile.close();
-//		postProcess(classFile);		
+		//post processing currently not necessary	
+		//postProcess(classFile);		
 		reasoner.dispose();		
 	}
 	
+	//I'm only leaving in this crazy, unused method for any 
+	//serializations needing modification in the future.  
+	//This can be achieved using system calls, as shown below.
 	public void postProcess(String classFile) throws IOException {
-		//for tomorrow - populate column 6 on class tree file
-		//with the help of unique mps found within the members file
-		//use the Product as a key to connect to class tree
-		// get back to this later.
+
 		ArrayList<OWLClass> uniqueMps = new ArrayList<OWLClass>();
 		for( OWLClass c : this.roots.keySet() ) {
 			ArrayList<OWLClass> allMps = new ArrayList<OWLClass>();
