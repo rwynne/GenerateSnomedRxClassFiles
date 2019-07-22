@@ -69,28 +69,37 @@ public class Path {
 		}
 		return id;		
 	}
-	
-    public synchronized int hashCode() {
-        int _hashCode = 1;
-        if (this.path != null) {
-            _hashCode += this.path.hashCode();
-        }
-        return _hashCode;
-    }
-		  
-	public boolean equals(Object o) {
-		boolean equal = true;
-		if (o instanceof Path) {
-			ArrayList<OWLClass> a = this.path;
-			ArrayList<OWLClass> b = ((Path) o).getPath();
-			if( !a.equals(b) ) {
-				equal = false;
-			}
-		}
-		else {
-			equal = false;
-		}		
-		return equal;
-	}		
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((namespace == null) ? 0 : namespace.hashCode());
+		result = prime * result + ((path == null) ? 0 : path.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Path other = (Path) obj;
+		if (namespace == null) {
+			if (other.namespace != null)
+				return false;
+		} else if (!namespace.equals(other.namespace))
+			return false;
+		if (path == null) {
+			if (other.path != null)
+				return false;
+		} else if (!path.equals(other.path))
+			return false;
+		return true;
+	}
+			
 
 }

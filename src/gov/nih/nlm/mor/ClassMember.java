@@ -1,5 +1,6 @@
 package gov.nih.nlm.mor;
 
+import org.semanticweb.owlapi.model.OWLClass;
 
 /*
 1.	Class Tree File.  This file describes the classes in RxClass Each line has bar (|) delimited fields.  For example:
@@ -28,49 +29,150 @@ public class ClassMember {
 	String countFromMedrt = "0";
 	String countChildren = "";
 	String treeIdOfParent = "";
-	String countDrugMembers = "0";
+	OWLClass product = null;
+	int countDrugMembers = 0;
 	String delimiter = "|";
 	
 	public ClassMember() {
 		
 	}
 	
-	public void setClassType(String s) {
-		this.classType = s;
+	public String getClassType() {
+		return classType;
+	}
+
+
+
+	public void setClassType(String classType) {
+		this.classType = classType;
+	}
+
+
+
+	public String getField2() {
+		return field2;
+	}
+
+
+
+	public void setField2(String field2) {
+		this.field2 = field2;
+	}
+
+
+
+	public String getTreeId() {
+		return treeId;
+	}
+
+
+
+	public void setTreeId(String treeId) {
+		this.treeId = treeId;
+	}
+
+
+
+	public String getClassName() {
+		return className;
+	}
+
+
+
+	public void setClassName(String className) {
+		this.className = className;
+	}
+
+
+
+	public String getClassId() {
+		return classId;
+	}
+
+
+
+	public void setClassId(String classId) {
+		this.classId = classId;
+	}
+
+
+
+	public String getCountFromDaily() {
+		return countFromDaily;
+	}
+
+
+
+	public void setCountFromDaily(String countFromDaily) {
+		this.countFromDaily = countFromDaily;
+	}
+
+
+
+	public String getCountFromMedrt() {
+		return countFromMedrt;
+	}
+
+
+
+	public void setCountFromMedrt(String countFromMedrt) {
+		this.countFromMedrt = countFromMedrt;
+	}
+
+
+
+	public String getCountChildren() {
+		return countChildren;
+	}
+
+
+
+	public void setCountChildren(String countChildren) {
+		this.countChildren = countChildren;
+	}
+
+
+
+	public String getTreeIdOfParent() {
+		return treeIdOfParent;
+	}
+
+
+
+	public void setTreeIdOfParent(String treeIdOfParent) {
+		this.treeIdOfParent = treeIdOfParent;
+	}
+
+
+
+	public int getCountDrugMembers() {
+		return countDrugMembers;
+	}
+
+
+
+	public void setCountDrugMembers(int countDrugMembers) {
+		this.countDrugMembers = countDrugMembers;
+	}
+
+
+
+	public String getDelimiter() {
+		return delimiter;
+	}
+
+
+
+	public void setDelimiter(String delimiter) {
+		this.delimiter = delimiter;
 	}
 	
-	public void setTreeId(String s) {
-		this.treeId = s;
+	public void setProductClass(OWLClass c) {
+		this.product = c;
 	}
-	
-	public void setClassName(String s) {
-		this.className = s;
-	}
-	
-	public void setClassId(String s) {
-		this.classId = s;
-	}
-	
-	public void setCountFromDaily(String s) {
-		this.countFromDaily = s;
-	}
-	
-	public void setCountFromMedrt(String s) {
-		this.countFromMedrt = s;
-	}
-	
-	public void setCountChildren(String s) {
-		this.countChildren = s;
-	}
-	
-	public void setTreeIdParent(String s) {
-		this.treeIdOfParent = s;
-	}
-	
-	public void setCountDrugMember(String s) {
-		this.countDrugMembers = s;
-	}
-	
+
+
+
 	public String getMemberRow() {
 		String row = "";
 		row += classType + delimiter;
@@ -85,4 +187,15 @@ public class ClassMember {
 		row += countDrugMembers;
 		return row;
 	}
+	
+	
+	public int compareTo(final ClassMember m1, final ClassMember m2) {
+	    int c;
+	    c = m1.getClassType().compareTo(m2.getClassType());
+	    if (c == 0)
+	       c = m1.getClassId().compareTo(m2.getClassId());
+	    return c;
+	}
+	
+	
 }

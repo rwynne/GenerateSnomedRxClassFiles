@@ -62,6 +62,9 @@ public class GenerateSnomedRxClassFiles {
 	HashMap<OWLClass, ArrayList<DrugMember>> drugMemberMap = new HashMap<OWLClass, ArrayList<DrugMember>>();
 	HashMap<OWLClass, ArrayList<OWLClass>> allMps = new HashMap<OWLClass, ArrayList<OWLClass>>();
 	HashMap<OWLClass, Integer> mp2Count = new HashMap<OWLClass, Integer>();
+	ArrayList<ClassMember> classMemberList = new ArrayList<ClassMember>();
+	ArrayList<ClassMember> classMemberListWithCounts = new ArrayList<ClassMember>();
+	ArrayList<DrugMember>  drugMemberList = new ArrayList<DrugMember>();
 
 	final String namespace = "http://snomed.info/id/";
 
@@ -216,13 +219,55 @@ public class GenerateSnomedRxClassFiles {
 
 	public void run() {
 
-		generateClassTreeFile();
+		generateClasses();
 
-		generateDrugMembersFile();
+		generateDrugMembers();
+		
+		addCountsToClasses();
+		
+		serialize();
 
 	}
+	
+	public void serialize() {
+		
+		for( OWLClass cls : roots.keySet()) {
+			RootClass rootClass = roots.get(cls);
+			for( ClassMember member : classMemberListWithCounts) {
+				if( member.getClassType().equals(rootClass.getClassType())) {
+					printClassMember(member);			
+				}
+			}
+		}
+		
+		for( DrugMember member : drugMemberList ) {
+			printDrugMember(member.getSource(), member.getRelationship(), member.getProductForDirect() , member.getIn(), member.getMpProduct(), member.isDirect(), member.getPath());
+		}
+	}
+	
+	public void addCountsToClasses() {
+	
+		classMemberList.stream().filter(x -> x.classType.equals("DISPOS")).forEach(y -> {
+			drugMemberList.stream().forEach(z -> {
+				if( y.getClassId().equals(getId(z.getProductForDirect())) ) {
+					y.setCountDrugMembers(y.getCountDrugMembers() + 1);
+				}
+			});
+			classMemberListWithCounts.add(y);
+		});
+		
+		classMemberList.stream().filter(x -> x.classType.equals("STRUCT")).forEach(y -> {
+			drugMemberList.stream().forEach(z -> {
+				if( y.getClassId().equals(getId(z.getProductForDirect())) ) {
+					y.setCountDrugMembers(y.getCountDrugMembers() + 1);
+				}
+			});
+			classMemberListWithCounts.add(y);
+		});		
+		
+	}
 
-	public void generateDrugMembersFile() {
+	public void generateDrugMembers() {
 		/*
 		 * 2.	Drug Members File.  This describes the drug members in the classes. Each line has bar (|) delimited fields.  For example:
 
@@ -293,7 +338,11 @@ public class GenerateSnomedRxClassFiles {
 						if( this.sct2RxIN.containsKey(Long.valueOf(getId(mp))) ) {
 							in = sct2RxIN.get(Long.valueOf(getId(mp))).get(0);
 							if( in != null ) {
-								printDrugMember(_1_source, _2_relationship, productForDirect, in, mp, true, p );
+								DrugMember drugMember = new DrugMember(_1_source, _2_relationship, productForDirect, in, mp, true, p);
+								if( !drugMemberList.contains(drugMember) ) {
+									drugMemberList.add(drugMember);
+								}
+//								printDrugMember(_1_source, _2_relationship, productForDirect, in, mp, true, p );
 							}
 						}						
 					}
@@ -302,45 +351,52 @@ public class GenerateSnomedRxClassFiles {
 					while(order.size() > 0) {
 						RxNormIngredient in = null;
 						OWLClass productForIndirect = order.remove(0);
-//						if( !productForIndirect.equals(rootClass) ) {
 							for( OWLClass mp : mps ) {
 								if( this.sct2RxIN.containsKey(Long.valueOf(getId(mp))) ) {
 									in = sct2RxIN.get(Long.valueOf(getId(mp))).get(0);
 									if( in != null ) {
-										printDrugMember(_1_source, _2_relationship, productForIndirect, in, mp, false, p );
+										DrugMember drugMember = new DrugMember(_1_source, _2_relationship, productForIndirect, in, mp, false, p);
+										if( !drugMemberList.contains(drugMember) ) {
+											drugMemberList.add(drugMember);
+										}
+//										printDrugMember(_1_source, _2_relationship, productForIndirect, in, mp, false, p );
 									}
 								}																				
 							}
-//						}
 					}
-					
-					
-//					for( OWLClass mp : mps ) {
-//						ArrayList<OWLClass> productOrder = order;
-//												
-//						RxNormIngredient in = null;
-//						if( this.sct2RxIN.containsKey(Long.valueOf(getId(mp))) ) {
-//							in = sct2RxIN.get(Long.valueOf(getId(mp))).get(0);
-//							printDrugMember(_1_source, _2_relationship, productForDirect, in, mp, true, p );
-//						}
-//						if( in != null ) {
-//							if( productOrder.size() > 0 ) {
-//								OWLClass productForDirect = productOrder.remove(0);
-//								printDrugMember(_1_source, _2_relationship, productForDirect, in, mp, true, p );
-//							}
-//							while( productOrder.size() != 0 ) {
-//								OWLClass productForIndirect = productOrder.remove(0);
-//								printDrugMember(_1_source, _2_relationship, productForIndirect, in, mp, false, p );
-//							}
-//						}						
-//					}
+
 				}
 			}
 		}
 	}
+	
+	private void printClassMember(ClassMember c) {
+				
+					String _1_classType = c.getClassType();
+					String _2_notUsed = c.getField2();
+					String _3_treeId = c.getTreeId();
+					String _4_className = c.getClassName().replace(" (product)", "");
+					String _5_classId = c.getClassId();
+					String _6_countFromDailyMed = String.valueOf(c.getCountDrugMembers());  //we think this can be hi-jacked for SNOMED counts
+					String _7_countFromMedrt = c.getCountFromMedrt();
+					String _8_countOfChildren = c.getCountChildren();  //classes in the hierarchy structure that are direct product descendants
+					String _9_treeIdOfParent = c.getTreeIdOfParent();
+					String _10_countFromSPLSME = "0"; //add to model?
+					
+					
+					this.classTreeFile.println(String.join(
+						"|", _1_classType, _2_notUsed, _3_treeId, _4_className,
+						_5_classId, _6_countFromDailyMed, _7_countFromMedrt,
+						_8_countOfChildren, _9_treeIdOfParent, _10_countFromSPLSME)
+					);
+					this.classTreeFile.flush();
+
+	}
 
 		
 	private void printDrugMember(String source, String rela, OWLClass product, RxNormIngredient in, OWLClass mp, boolean direct, Path p) {
+		
+//		incrementClassMember(product);
 		
 		String[] normalizedIn = normalizeIngredient(in.getRxcui());
 		String _1_source = source;
@@ -378,97 +434,17 @@ public class GenerateSnomedRxClassFiles {
 		this.drugMembersFile.flush();				
 	}
 	
-//	private void setDirectInToProduct(OWLClass product, RxNormIngredient directIn) {
-//		if( this.product2In.containsKey(product) ) {
-//			ArrayList<RxNormIngredient> list = product2In.get(product);
-//			if( !list.contains(directIn) ) {
-//				list.add(directIn);
-//				product2In.put(product, list);
-//			}
-//			else {
-//				list = new ArrayList<RxNormIngredient>();
-//				list.add(directIn);
-//				product2In.put(product, list);
-//			}
-//		}
-//		else {
-//			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-//			list.add(directIn);
-//			product2In.put(product, list);
-//		}
-//	}
-	
-//	private void setIndirectInToProduct(OWLClass product, RxNormIngredient indirectIn) {
-//		if( this.product2In.containsKey(product) ) {
-//			ArrayList<RxNormIngredient> list = product2In.get(product);
-//			if( !list.contains(indirectIn) ) {
-//				list.add(indirectIn);
-//				product2In.put(product, list);
-//			}
-//			else {
-//				list = new ArrayList<RxNormIngredient>();
-//				list.add(indirectIn);
-//				product2In.put(product, list);
-//			}
-//		}
-//		else {
-//			ArrayList<RxNormIngredient> list = new ArrayList<RxNormIngredient>();
-//			list.add(indirectIn);
-//			product2In.put(product, list);
-//		}		
-//	}
-	
-//	private void setDrugMemberMap(OWLClass c, OWLClass snctClassOfMp, Set<RxNormIngredient> newIns, Path p) {
-//		DrugMember dm = new DrugMember(c, snctClassOfMp, newIns, p);
-//		if( drugMemberMap.containsKey(c) ) {
-//			ArrayList<DrugMember> dms = drugMemberMap.get(c);
-//			if( !dms.contains(dm) ) {
-//			dms.add(dm);
-//			}
-//			drugMemberMap.put(c, dms);
-//		}
-//		else {
-//			ArrayList<DrugMember> dms = new ArrayList<DrugMember>();
-//			dms.add(dm);
-//			drugMemberMap.put(c, dms);
-//		}		
-//	}
-	
-
-//	private void setProduct2MpMap(OWLClass product, OWLClass mp) {
-//		
-//		//we need to add the product as a key if it doesn't exist
-//		if( !product2Mp.containsKey(product) ) {
-//			ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
-//			mpList.add(mp);
-//			product2Mp.put(product, mpList);
-//		}
-//		
-//		//then we need to loop through the mps found within the product
-//		//if the above case occurs this portion is skipped
-//		for( OWLClass p : product2Mp.keySet() ) {
-//			if( product2Mp.containsKey(p) ) {
-//				if( product2Mp.containsKey(p) ) {
-//					ArrayList<OWLClass> mpList = product2Mp.get(p);
-//					if( !mpList.contains(mp) ) {
-//						mpList.add(mp);
-//					}
-//					product2Mp.put(p, mpList);
-//				}
-//				else {
-//					ArrayList<OWLClass> mpList = new ArrayList<OWLClass>();
-//					mpList.add(mp);
-//					product2Mp.put(p, mpList);
-//					
-//				}			
-//			}
-//		}
-//		
-//	}
-	
 	private Set<OWLClass> getMpsForLastProduct(OWLClass c) {
 		return reasoner.subClasses(c, true).filter(x -> classIsMp(x)).collect(Collectors.toSet());
 	}
+	
+//	private void incrementClassMember(OWLClass product) {
+//		String id = getId(product);
+//		classMemberList.stream().filter(x -> x.getClassId().equals(id)).forEach(y -> {
+//			int count = y.getCountDrugMembers();
+//			y.setCountDrugMembers(++count);
+//		});
+//	}
 	
 	
 	public HashMap<Long, Set<RxNormIngredient>> getClassTypesAndIns(OWLClass c) {
@@ -609,16 +585,29 @@ public class GenerateSnomedRxClassFiles {
 		return treeId;
 	}
 	
-	public void printClassMap(RootClass root) {
+	public void setClassList(RootClass root) {
 		//print root
 		// MOA||000223|Mechanism of Action (MoA)|N0000000223|821|4309|8||836	
-		this.classTreeFile.println(root.getClassType() + "|" + "|" + root.getRootCode() + "|" + root.getRootName() + "|" +  root.getRootCode() + "||0||" + "|0"); //post-processing, populate 6 with the number of unique mps
-		for(OWLClass c : this.classPathMap.keySet()) {
+		ClassMember classRootMember = new ClassMember();
+
+		classRootMember.setClassType(root.getClassType());
+		classRootMember.setTreeId(String.valueOf(root.getRootCode()));
+		classRootMember.setClassId(String.valueOf(root.getRootCode()));
+		classRootMember.setClassName(root.getRootName());
+		classRootMember.setCountChildren(getProductChildrenCount(root.getRootClass()));
+		
+	
+		classMemberList.add(classRootMember);
+		
+//		this.classTreeFile.println(root.getClassType() + "|" + "|" + root.getRootCode() + "|" + root.getRootName() + "|" +  root.getRootCode() + "||0||" + "|0"); //post-processing, populate 6 with the number of unique mps
+		for(OWLClass c : this.classPathMap.keySet()) {		
 			for( Path p : this.classPathMap.get(c) ) {
+
+				//this.classTreeFile.print(getRDFSLabel(c).replace(" (product)", "").replace(" (medicinal product)", "") + "|" + getId(c) + "|" + getDrugMemberCount(c) + "|" + "0" + "|" + getChildrenCount(c) + "|" + parentClassTreeId + 	
 				String parentClassTreeId = new String();
-				this.classTreeFile.print(root.getClassType() + "|" + "|"); //nothing ever in field 2
+				String treeId = new String();				
 				for( int i=0; i < p.getPath().size(); i++ ) {
-					this.classTreeFile.print(getId(p.getPath().get(i)) );
+					treeId = treeId + getId(p.getPath().get(i));
 					if( i < (p.getPathSize() - 1 ) ) {
 						parentClassTreeId = parentClassTreeId + getId(p.getPath().get(i));
 					}
@@ -626,16 +615,21 @@ public class GenerateSnomedRxClassFiles {
 						parentClassTreeId = parentClassTreeId + ".";
 					}										
 					if( i < (p.getPathSize() - 1) ) {
-						this.classTreeFile.print(".");
-					}					
+						treeId = treeId + ".";
+					}
+
 				}
-				this.classTreeFile.print("|");
-				this.classTreeFile.print(getRDFSLabel(c).replace(" (product)", "").replace(" (medicinal product)", "") + "|" + getId(c) + "|" + getDrugMemberCount(c) + "|" + "0" + "|" + getChildrenCount(c) + "|" + parentClassTreeId + "|" + "0");	
-				this.classTreeFile.print("\n");
-				this.classTreeFile.flush();
 				
-				//We need to associate the class to RxNorm Ingredients
+				ClassMember classMember = new ClassMember();
+				classMember.setClassId(getId(c));
+				classMember.setTreeId(treeId);
+				classMember.setClassName(getRDFSLabel(c));
+				classMember.setCountDrugMembers(0); //populate during drug members
+				classMember.setClassType(root.getClassType());
+				classMember.setCountChildren(getProductChildrenCount(c));
+				classMember.setTreeIdOfParent(parentClassTreeId);
 				
+				classMemberList.add(classMember);
 				
 			}
 		}
@@ -704,12 +698,12 @@ public class GenerateSnomedRxClassFiles {
 		
 	}
 	
-	private int getChildrenCount(OWLClass c) {
+	private String getProductChildrenCount(OWLClass c) {
 		int i = 0;
 		
-		i = (int) reasoner.subClasses(c, true).count();
+		i = (int) reasoner.subClasses(c, true).filter(x -> getRDFSLabel(x) != null && getRDFSLabel(x).contains("(product)")).count();
 		
-		return i;
+		return String.valueOf(i);
 	}
 	
 	private int getDrugMemberCount(OWLClass c) {
@@ -720,7 +714,7 @@ public class GenerateSnomedRxClassFiles {
 	}
 		
 	
-	public void generateClassTreeFile() {
+	public void generateClasses() {
 		
 		/*
 		 1.	Class Tree File.  This file describes the classes in RxClass Each line has bar (|) delimited fields.  For example:
@@ -746,7 +740,7 @@ public class GenerateSnomedRxClassFiles {
 			list.add(root);
 //			list.add(rClass.getRootClass());
 			setPaths(rClass.getRootClass(), new Path(list));
-			printClassMap(rClass);
+			setClassList(rClass);
 			addMapToMaster(rClass.getRootClass(), this.classPathMap);
 			this.classPathMap.clear();
 		}
@@ -883,58 +877,60 @@ public class GenerateSnomedRxClassFiles {
 	//I'm only leaving in this crazy, unused method for any 
 	//serializations needing modification in the future.  
 	//This can be achieved using system calls, as shown below.
-	public void postProcess(String classFile) throws IOException {
-
-		ArrayList<OWLClass> uniqueMps = new ArrayList<OWLClass>();
-		for( OWLClass c : this.roots.keySet() ) {
-			ArrayList<OWLClass> allMps = new ArrayList<OWLClass>();
-			if( this.allMps.containsKey(c)) {
-				allMps = this.allMps.get(c);
-			}
-			else {
-				System.out.println("DEBUG: Absent key " + getRDFSLabel(c)); 
-			}
-			ArrayList<OWLClass> allMpsCopy = allMps;
-
-			for( OWLClass mp : allMps ) {
-				if( !allMps.contains(mp) ) {
-					allMpsCopy.add(mp);
-				}
-			}
-			Integer count = 0;			
-			for( OWLClass mpClass : allMpsCopy ) {
-				if( mp2Count.containsKey(mpClass) ) this.mp2Count.put(mpClass, ++count);
-			}
-			
-			PrintWriter perlConfig = null;
-			try {
-				 perlConfig = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("configForPost.txt")),StandardCharsets.UTF_8),true);			
-			}
-			catch(Exception e) {
-				System.err.println("Unable to create the classTreeFile.");
-				e.printStackTrace();
-			}
-		
-			perlConfig.println("Unique ID\tCount\tTruncated Name");
-			
-			Runtime.getRuntime().exec("cp classTreeFile.txt classTreeFileTemp.txt");			
-			
-			
-			for( OWLClass uniqueMp : allMpsCopy ) {
-				perlConfig.println(getId(uniqueMp) + "\t" + getId(c) + "\t" + String.valueOf(this.mp2Count.get(uniqueMp)) + "\t" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "") );
-				try {
-					System.out.println("grep \""  + getId(uniqueMp) + "\" classTreeFile.txt" + " | grep " + getId(c)  + " | " + "awk -v count=" + String.valueOf(this.mp2Count.get(uniqueMp)) + " -v mp=\"" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "")  + "\" -f replace_drugmember_count_in_class_file.awk >> " + "classTreeFileWithCounts.txt");
-					Runtime.getRuntime().exec("grep \""  + getId(uniqueMp) + "\" classTreeFile.txt" + " | grep " + getId(c)  + " | " + "awk -v count=" + String.valueOf(this.mp2Count.get(uniqueMp)) + " -v mp=\"" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "")  + "\" -f replace_drugmember_count_in_class_file.awk >> " + "classTreeFileWithCounts.txt");
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					System.err.println("TOTAL PROBS WITH: " + uniqueMp);
-					System.err.println("Is awk and grep installed on this OS?");
-					e.printStackTrace();
-				}
-			}
-
-			uniqueMps.clear();
-		}
-	}
+	//This nonsense is resolved with the current model.  Anything
+	//requiring model changes could be performed "in post" here.
+//	public void postProcess(String classFile) throws IOException {
+//
+//		ArrayList<OWLClass> uniqueMps = new ArrayList<OWLClass>();
+//		for( OWLClass c : this.roots.keySet() ) {
+//			ArrayList<OWLClass> allMps = new ArrayList<OWLClass>();
+//			if( this.allMps.containsKey(c)) {
+//				allMps = this.allMps.get(c);
+//			}
+//			else {
+//				System.out.println("DEBUG: Absent key " + getRDFSLabel(c)); 
+//			}
+//			ArrayList<OWLClass> allMpsCopy = allMps;
+//
+//			for( OWLClass mp : allMps ) {
+//				if( !allMps.contains(mp) ) {
+//					allMpsCopy.add(mp);
+//				}
+//			}
+//			Integer count = 0;			
+//			for( OWLClass mpClass : allMpsCopy ) {
+//				if( mp2Count.containsKey(mpClass) ) this.mp2Count.put(mpClass, ++count);
+//			}
+//			
+//			PrintWriter perlConfig = null;
+//			try {
+//				 perlConfig = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File("configForPost.txt")),StandardCharsets.UTF_8),true);			
+//			}
+//			catch(Exception e) {
+//				System.err.println("Unable to create the classTreeFile.");
+//				e.printStackTrace();
+//			}
+//		
+//			perlConfig.println("Unique ID\tCount\tTruncated Name");
+//			
+//			Runtime.getRuntime().exec("cp classTreeFile.txt classTreeFileTemp.txt");			
+//			
+//			
+//			for( OWLClass uniqueMp : allMpsCopy ) {
+//				perlConfig.println(getId(uniqueMp) + "\t" + getId(c) + "\t" + String.valueOf(this.mp2Count.get(uniqueMp)) + "\t" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "") );
+//				try {
+//					System.out.println("grep \""  + getId(uniqueMp) + "\" classTreeFile.txt" + " | grep " + getId(c)  + " | " + "awk -v count=" + String.valueOf(this.mp2Count.get(uniqueMp)) + " -v mp=\"" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "")  + "\" -f replace_drugmember_count_in_class_file.awk >> " + "classTreeFileWithCounts.txt");
+//					Runtime.getRuntime().exec("grep \""  + getId(uniqueMp) + "\" classTreeFile.txt" + " | grep " + getId(c)  + " | " + "awk -v count=" + String.valueOf(this.mp2Count.get(uniqueMp)) + " -v mp=\"" + getRDFSLabel(uniqueMp).replace(" (product)", "").replace(" (medicinal product)", "")  + "\" -f replace_drugmember_count_in_class_file.awk >> " + "classTreeFileWithCounts.txt");
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					System.err.println("TOTAL PROBS WITH: " + uniqueMp);
+//					System.err.println("Is awk and grep installed on this OS?");
+//					e.printStackTrace();
+//				}
+//			}
+//
+//			uniqueMps.clear();
+//		}
+//	}
 
 }
