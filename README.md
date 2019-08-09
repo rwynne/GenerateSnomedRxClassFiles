@@ -1,6 +1,6 @@
 # GenerateSnomedRxClassFiles
 
-A program to produce files necessary for loading SNOMED CT classes into RxClass.
+A program to produce files necessary for loading SNOMED CT classes and synonyms into RxClass.
 
 ## Sources supported
 - Disposition (DISPOS)
@@ -15,5 +15,5 @@ mvn package
 ```
 To run:
 ```
-java -jar GenerateSnomedRxClassFiles-1.0-SNAPSHOT.jar snomed.owl classTreeFile.txt drugMembersFile.txt
+java -jar GenerateSnomedRxClassFiles-1.0-SNAPSHOT.jar snomed.owl classTreeFile.txt drugMembersFile.txt synonymsFile.txt
 ```
