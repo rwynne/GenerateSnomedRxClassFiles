@@ -48,6 +48,7 @@ public class GenerateSnomedRxClassFiles {
 	OWLDataFactory factory = null;
 	PrintWriter classTreeFile = null;
 	PrintWriter drugMembersFile = null;
+	PrintWriter synonymsFile = null;  //this will be removed when process for querying SNCT RRF DB for Synonyms is solidified
 	HashMap<OWLClass, RootClass> roots = new HashMap<OWLClass, RootClass>();
 	HashMap<OWLClass, ArrayList<Path>> productPaths = new HashMap<OWLClass, ArrayList<Path>>();
 	HashMap<OWLClass, ArrayList<RxNormIngredient>> product2In = new HashMap<OWLClass, ArrayList<RxNormIngredient>>();	
@@ -74,12 +75,13 @@ public class GenerateSnomedRxClassFiles {
 
 	public static void main(String args[]) throws IOException {
 		GenerateSnomedRxClassFiles generate = new GenerateSnomedRxClassFiles();
-		if( args.length < 3 ) {
+		if( args.length < 4 ) {
 			System.err.println("GenerateSnomedRxClassFiles requires three parameters:");
-			System.err.println("\t[SNOMED CT OWL URI] [CLASS TREE FILE TO SAVE] [DRUG MEMBERS FILE TO SAVE]");
+			System.err.println("\t[SNOMED CT OWL URI] [CLASS TREE FILE TO SAVE] [DRUG MEMBERS FILE TO SAVE] [SYNONYMS FILE TO SAVE]");  //NB: The synonyms will be loaded into a database to pull from
+																																        //for now we will use the FSN per OB
 			System.exit(-1);
 		}
-		generate.configure(args[0], args[1], args[2]);
+		generate.configure(args[0], args[1], args[2], args[3]);
 		generate.run();
 		generate.cleanup(args[1]);
 	}
@@ -88,8 +90,8 @@ public class GenerateSnomedRxClassFiles {
 
 	}
 
-	public void configure(String owlFile, String classTreeFile, String drugMembersFile) {
-		setPrintWriters(classTreeFile, drugMembersFile);
+	public void configure(String owlFile, String classTreeFile, String drugMembersFile, String synonymsFile) {
+		setPrintWriters(classTreeFile, drugMembersFile, synonymsFile);
 
 		try {
 			man = OWLManager.createOWLOntologyManager();			
@@ -199,7 +201,7 @@ public class GenerateSnomedRxClassFiles {
 	}
 
 
-	public void setPrintWriters(String classFilename, String drugFilename) {
+	public void setPrintWriters(String classFilename, String drugFilename, String synonymFilename) {
 		try {
 			classTreeFile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(classFilename)),StandardCharsets.UTF_8),true);			
 		}
@@ -214,7 +216,16 @@ public class GenerateSnomedRxClassFiles {
 		catch(Exception e) {
 			System.err.println("Unable to create the drugMemberFile.");
 			e.printStackTrace();
+		}
+		
+		try {
+			synonymsFile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(synonymFilename)),StandardCharsets.UTF_8),true);
+		}
+		catch(Exception e) {
+			System.err.println("Unable to create the synonymsFile.");
+			e.printStackTrace();
 		}		
+		
 	}
 
 	public void run() {
@@ -235,7 +246,7 @@ public class GenerateSnomedRxClassFiles {
 			RootClass rootClass = roots.get(cls);
 			for( ClassMember member : classMemberListWithCounts) {
 				if( member.getClassType().equals(rootClass.getClassType())) {
-					printClassMember(member);			
+					printClassMember(member);	
 				}
 			}
 		}
@@ -390,6 +401,8 @@ public class GenerateSnomedRxClassFiles {
 						_8_countOfChildren, _9_treeIdOfParent, _10_countFromSPLSME)
 					);
 					this.classTreeFile.flush();
+					
+					printSynonym(_1_classType, _5_classId, _4_className);
 
 	}
 
@@ -431,7 +444,20 @@ public class GenerateSnomedRxClassFiles {
 		_14_significant + "|" +
 		_15_ttyAgain
 		);
-		this.drugMembersFile.flush();				
+		this.drugMembersFile.flush();
+		
+		if( _2_relationship.contains("disposition") ) { 
+			printSynonym("DISPOS", _8_sourceId, _9_sourceName);
+		}
+		else {
+			printSynonym("STRUCT", _8_sourceId, _9_sourceName); 
+		}
+		
+	}
+	
+	private void printSynonym(String type, String id, String name) {
+		synonymsFile.println(type + "|" + name + "|" + id + "|" + name);
+		synonymsFile.flush();
 	}
 	
 	private Set<OWLClass> getMpsForLastProduct(OWLClass c) {
@@ -445,6 +471,7 @@ public class GenerateSnomedRxClassFiles {
 //			y.setCountDrugMembers(++count);
 //		});
 //	}
+	
 	
 	
 	public HashMap<Long, Set<RxNormIngredient>> getClassTypesAndIns(OWLClass c) {
